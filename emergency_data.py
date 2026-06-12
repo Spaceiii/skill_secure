@@ -4,15 +4,18 @@ import json
 from api_ban import geocode
 from api_osm import search_infrastructure
 from api_meteo import get_weather
+from api_carburant import search_cheapest_fuel
 
 def main():
     parser = argparse.ArgumentParser(description="Outil de collecte de données pour les urgences territoriales.")
-    parser.add_argument("action", choices=["geocode", "infra", "weather"], help="Action à effectuer.")
+    parser.add_argument("action", choices=["geocode", "infra", "weather", "fuel"], help="Action à effectuer.")
     parser.add_argument("--address", type=str, help="Adresse à géocoder (requis pour 'geocode').")
     parser.add_argument("--lat", type=float, help="Latitude (requis pour 'infra' et 'weather').")
     parser.add_argument("--lon", type=float, help="Longitude (requis pour 'infra' et 'weather').")
-    parser.add_argument("--type", type=str, choices=["hospital", "water", "road", "building"], help="Type d'infrastructure (requis pour 'infra').")
+    parser.add_argument("--type", type=str, choices=["hospital", "water", "road", "building", "store"], help="Type d'infrastructure (requis pour 'infra').")
     parser.add_argument("--radius", type=int, default=1000, help="Rayon de recherche en mètres pour 'infra' (défaut: 1000).")
+    parser.add_argument("--fuel", type=str, default="all", help="Carburant cible pour l'action 'fuel' (gazole, sp95, sp98, e10, e85, gplc, all).")
+    parser.add_argument("--limit", type=int, default=5, help="Nombre maximal d'offres à retourner pour l'action 'fuel'.")
     
     args = parser.parse_args()
     
@@ -34,6 +37,12 @@ def main():
                 print(json.dumps({"error": "Paramètres --lat et --lon requis pour l'action weather."}))
                 sys.exit(1)
             print(get_weather(args.lat, args.lon))
+
+        elif args.action == "fuel":
+            if not args.address:
+                print(json.dumps({"error": "Paramètre --address requis pour l'action fuel."}))
+                sys.exit(1)
+            print(search_cheapest_fuel(args.address, fuel=args.fuel, radius=args.radius, limit=args.limit))
             
     except Exception as e:
         print(json.dumps({"error": f"Erreur inattendue : {str(e)}"}))

@@ -20,6 +20,11 @@ def get_overpass_query(lat: float, lon: float, infra_type: str, radius: int = 10
         """,
         "building": f"""
             way(around:{radius},{lat},{lon})["building"];
+        """,
+        "store": f"""
+            node(around:{radius},{lat},{lon})["shop"~"^(supermarket|convenience|bakery|butcher|pharmacy)$"];
+            way(around:{radius},{lat},{lon})["shop"~"^(supermarket|convenience|bakery|butcher|pharmacy)$"];
+            node(around:{radius},{lat},{lon})["amenity"="pharmacy"];
         """
     }
     
@@ -44,7 +49,7 @@ def search_infrastructure(lat: float, lon: float, infra_type: str, radius: int =
         
     query = get_overpass_query(lat, lon, infra_type, radius)
     if not query:
-         return json.dumps({"error": f"Type d'infrastructure inconnu: {infra_type}. Types supportés: hospital, water, road, building."})
+         return json.dumps({"error": f"Type d'infrastructure inconnu: {infra_type}. Types supportés: hospital, water, road, building, store."})
 
     url = "https://overpass-api.de/api/interpreter"
     headers = {"User-Agent": "ClaudeCode-EmergencyBot/1.0"}
@@ -58,7 +63,7 @@ def search_infrastructure(lat: float, lon: float, infra_type: str, radius: int =
         for el in elements[:20]: # Limiter à 20 résultats pour ne pas surcharger la réponse du LLM
             tags = el.get("tags", {})
             name = tags.get("name", "Inconnu")
-            el_type = tags.get("amenity") or tags.get("highway") or tags.get("emergency") or tags.get("building") or "N/A"
+            el_type = tags.get("amenity") or tags.get("shop") or tags.get("highway") or tags.get("emergency") or tags.get("building") or "N/A"
             
             # Récupérer les coordonnées (pour les ways, on utilise out center pour avoir lat/lon)
             el_lat = el.get("lat") or el.get("center", {}).get("lat")
