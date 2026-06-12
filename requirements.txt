@@ -1,1 +1,7 @@
 requests
+langchain
+langgraph
+langchain-google-genai
+langchain-mistralai
+python-dotenv
+pydantic
